@@ -1,0 +1,143 @@
+.text:000051BC ; =============== S U B R O U T I N E =======================================
+.text:000051BC
+.text:000051BC
+.text:000051BC ; HI_S32 ISP_AwbRun(ISP_DEV, const ISP_STAT_S *, ISP_REG_CFG_S *)
+.text:000051BC                 EXPORT ISP_AwbRun
+.text:000051BC ISP_AwbRun                              ; DATA XREF: LOAD:00000968↑o
+.text:000051BC                                         ; ISP_AlgRegisterAwb+8C↑o ...
+.text:000051BC
+.text:000051BC var_68          = -0x68
+.text:000051BC var_60          = -0x60
+.text:000051BC var_2C          = -0x2C
+.text:000051BC
+.text:000051BC                 PUSH    {R4-R10,LR}
+.text:000051C0                 LDR     R10, =($_GLOBAL_OFFSET_TABLE_ - 0x51D0)
+.text:000051C4                 LDR     R4, =(g_astIspCtx_ptr - 0x1D75C)
+.text:000051C8                 ADD     R10, PC, R10    ; $_GLOBAL_OFFSET_TABLE_
+.text:000051CC                 LDR     R3, [R10,R4]    ; g_astIspCtx
+.text:000051D0                 LDR     R4, =0x768
+.text:000051D4                 MOV     R9, R2
+.text:000051D8                 MLA     R4, R0, R4, R3
+.text:000051DC                 SUB     SP, SP, #0x48
+.text:000051E0                 LDR     R3, [R4,#0x73C]
+.text:000051E4                 LDR     R2, [R4,#0x384]
+.text:000051E8                 CMP     R3, #0
+.text:000051EC                 MOVNE   R6, #0
+.text:000051F0                 BNE     loc_532C
+.text:000051F4                 ADD     R5, SP, #0x68+var_60
+.text:000051F8                 ADD     R6, R5, #4
+.text:000051FC                 MOV     R8, #0x2C ; ','
+.text:00005200                 STR     R3, [R6],#4
+.text:00005204                 MLA     R8, R2, R8, R4
+.text:00005208                 STR     R3, [R6],#4
+.text:0000520C                 STR     R3, [SP,#0x68+var_60]
+.text:00005210                 STR     R3, [R6],#4
+.text:00005214                 STR     R3, [R6],#4
+.text:00005218                 STR     R3, [R6],#4
+.text:0000521C                 STR     R3, [R6],#4
+.text:00005220                 STR     R3, [R6],#4
+.text:00005224                 STR     R3, [R6],#4
+.text:00005228                 STR     R3, [R6],#4
+.text:0000522C                 STR     R3, [R6],#4
+.text:00005230                 STR     R3, [R6],#4
+.text:00005234                 STR     R3, [R6]
+.text:00005238                 LDR     LR, [R4,#0x388]
+.text:0000523C                 ADD     R12, R1, #0xC00
+.text:00005240                 ADD     R7, R4, #0x740
+.text:00005244                 MOV     R6, R7
+.text:00005248                 ADD     R0, R12, #8
+.text:0000524C                 ADD     R1, R1, #0xC10
+.text:00005250                 LDR     R2, [R4,#0x2C8]
+.text:00005254                 CMP     LR, #0
+.text:00005258                 STR     R2, [SP,#0x68+var_2C]
+.text:0000525C                 STR     R0, [SP,#0x68+var_2C.pstAwbStat1]
+.text:00005260                 STR     R1, [SP,#0x68+var_2C.pstAwbStat2]
+.text:00005264                 ADD     R8, R8, #0x388
+.text:00005268                 ADD     R7, R7, #8
+.text:0000526C                 ADD     R6, R6, #0xC
+.text:00005270                 BEQ     loc_52A8
+.text:00005274                 LDR     R3, [R4,#0x3AC]
+.text:00005278                 ADD     R8, R4, #0x388
+.text:0000527C                 CMP     R3, #0
+.text:00005280                 BEQ     loc_52A8
+.text:00005284                 LDR     R1, =0x1F43
+.text:00005288                 MOV     R2, R7
+.text:0000528C                 LDR     R0, [R4,#0x38C]
+.text:00005290                 BLX     R3
+.text:00005294                 LDR     R3, [R4,#0x3AC]
+.text:00005298                 LDR     R0, [R4,#0x38C]
+.text:0000529C                 LDR     R1, =0x1F45
+.text:000052A0                 MOV     R2, R6
+.text:000052A4                 BLX     R3
+.text:000052A8
+.text:000052A8 loc_52A8                                ; CODE XREF: ISP_AwbRun+B4↑j
+.text:000052A8                                         ; ISP_AwbRun+C4↑j
+.text:000052A8                 LDR     R1, [R4,#0x3B4]
+.text:000052AC                 CMP     R1, #0
+.text:000052B0                 BEQ     loc_52E8
+.text:000052B4                 LDR     R3, [R4,#0x3D8]
+.text:000052B8                 ADD     R8, R4, #0x3B4
+.text:000052BC                 CMP     R3, #0
+.text:000052C0                 BEQ     loc_52E8
+.text:000052C4                 MOV     R2, R7
+.text:000052C8                 LDR     R1, =0x1F43
+.text:000052CC                 LDR     R0, [R4,#0x3B8]
+.text:000052D0                 BLX     R3
+.text:000052D4                 MOV     R2, R6
+.text:000052D8                 LDR     R12, [R4,#0x3D8]
+.text:000052DC                 LDR     R0, [R4,#0x3B8]
+.text:000052E0                 LDR     R1, =0x1F45
+.text:000052E4                 BLX     R12
+.text:000052E8
+.text:000052E8 loc_52E8                                ; CODE XREF: ISP_AwbRun+F4↑j
+.text:000052E8                                         ; ISP_AwbRun+104↑j
+.text:000052E8                 LDR     R12, [R8,#0x20]
+.text:000052EC                 CMP     R12, #0
+.text:000052F0                 MOVEQ   R6, #0xFFFFFFFF
+.text:000052F4                 BEQ     loc_5314
+.text:000052F8                 LDR     R0, [R8,#4]
+.text:000052FC                 ADD     R1, SP, #0x68+var_2C
+.text:00005300                 MOV     R2, R5
+.text:00005304                 MOV     R3, #0
+.text:00005308                 BLX     R12
+.text:0000530C                 SUBS    R6, R0, #0
+.text:00005310                 BNE     loc_5338
+.text:00005314
+.text:00005314 loc_5314                                ; CODE XREF: ISP_AwbRun+138↑j
+.text:00005314                                         ; ISP_AwbRun+18C↓j
+.text:00005314                 LDR     R3, [R4,#0x744]
+.text:00005318                 LDR     R1, [R4,#0x2C4]
+.text:0000531C                 LDR     R2, [R4,#0x740]
+.text:00005320                 MOV     R0, R5
+.text:00005324                 STR     R9, [SP,#0x68+var_68]
+.text:00005328                 BL      j_AwbCfgReg
+.text:0000532C
+.text:0000532C loc_532C                                ; CODE XREF: ISP_AwbRun+34↑j
+.text:0000532C                 MOV     R0, R6
+.text:00005330                 ADD     SP, SP, #0x48 ; 'H'
+.text:00005334                 POP     {R4-R10,PC}
+.text:00005338 ; ---------------------------------------------------------------------------
+.text:00005338
+.text:00005338 loc_5338                                ; CODE XREF: ISP_AwbRun+154↑j
+.text:00005338                 LDR     R0, =(aWarningRunAwbL - 0x1D75C) ; "WARNING!! run awb lib err 0x%x!\n"
+.text:0000533C                 MOV     R1, R6
+.text:00005340                 ADD     R0, R10, R0     ; "WARNING!! run awb lib err 0x%x!\n"
+.text:00005344                 BL      printf
+.text:00005348                 B       loc_5314
+.text:00005348 ; End of function ISP_AwbRun
+.text:00005348
+.text:00005348 ; ---------------------------------------------------------------------------
+.text:0000534C off_534C        DCD $_GLOBAL_OFFSET_TABLE_ - 0x51D0
+.text:0000534C                                         ; DATA XREF: ISP_AwbRun+4↑r
+.text:00005350 off_5350        DCD g_astIspCtx_ptr - 0x1D75C
+.text:00005350                                         ; DATA XREF: ISP_AwbRun+8↑r
+.text:00005354 dword_5354      DCD 0x768               ; DATA XREF: ISP_AwbRun+14↑r
+.text:00005358 dword_5358      DCD 0x1F43              ; DATA XREF: ISP_AwbRun+C8↑r
+.text:00005358                                         ; ISP_AwbRun+10C↑r
+.text:0000535C dword_535C      DCD 0x1F45              ; DATA XREF: ISP_AwbRun+E0↑r
+.text:0000535C                                         ; ISP_AwbRun+124↑r
+.text:00005360 off_5360        DCD aWarningRunAwbL - 0x1D75C
+.text:00005360                                         ; DATA XREF: ISP_AwbRun:loc_5338↑r
+.text:00005360                                         ; "WARNING!! run awb lib err 0x%x!\n"
+.text:00005364
+
