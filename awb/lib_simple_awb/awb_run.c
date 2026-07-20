@@ -10,6 +10,36 @@
 
 #include <stdio.h>
 
+#if AWB_VERBOSE_DEBUG
+static void dump_awb_stat2(const ISP_AWB_STAT_2_S *s)
+{
+    HI_U32 z;
+    HI_U32 nonzero = 0;
+    HI_U32 above64 = 0;
+    unsigned long long sum = 0;
+    unsigned long long usableSum = 0;
+
+    for (z = 0; z < 255; ++z) {
+        HI_U32 n = s->au16WhitePointCount[z];
+
+        sum += n;
+
+        if (n != 0)
+            ++nonzero;
+
+        if (n > 0x40) {
+            ++above64;
+            usableSum += n;
+        }
+    }
+
+    fprintf(stderr,
+        "AWB Stat2: sum=%llu, usableSum=%llu, "
+        "nonzeroZones=%u, zonesAbove64=%u\n",
+        sum, usableSum, nonzero, above64);
+}
+#endif
+
 /*
  * Integer square root used by the original AWB implementation.
  *
@@ -387,6 +417,10 @@ HI_S32 AwbRun(
         pstAwbInfo->pstAwbStat1->u16BgRatio,
         pstAwbInfo->pstAwbStat1->u32WhitePointCount);
 
+#if AWB_VERBOSE_DEBUG
+    dump_awb_stat2(pstAwbInfo->pstAwbStat2);
+#endif
+
     /* Structure assignment copies the complete 0x34-byte ARM32 result. */
     *pstAwbResult = pstCtx->stResult;
 
@@ -482,7 +516,7 @@ HI_S32 AwbRun(
         pstAwbResult->au16ColorMatrix[7],
         pstAwbResult->au16ColorMatrix[8]);
 
-/*
+
     AWB_DEBUG_PRINT(
         "  output statistics config: change=%d, white=%u, black=%u, "
         "Cr=[%u..%u], Cb=[%u..%u]\n",
@@ -493,7 +527,7 @@ HI_S32 AwbRun(
         pstAwbResult->stStatAttr.u16MeteringCrRefMaxAwb,
         pstAwbResult->stStatAttr.u16MeteringCbRefMinAwb,
         pstAwbResult->stStatAttr.u16MeteringCbRefMaxAwb);
-*/
+
 
     /*
      * Statistics limits only need to be reprogrammed after initialization

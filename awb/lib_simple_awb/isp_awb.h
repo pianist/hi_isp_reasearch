@@ -228,8 +228,8 @@ typedef struct hiISP_AWB_STAT_ATTR_S
     /* 0x04 */ HI_U16 u16MeteringWhiteLevelAwb;
     /* 0x06 */ HI_U16 u16MeteringBlackLevelAwb;
     /* 0x08 */ HI_U16 u16MeteringCrRefMaxAwb;
-    /* 0x0A */ HI_U16 u16MeteringCrRefMinAwb;
     /* 0x0C */ HI_U16 u16MeteringCbRefMaxAwb;
+    /* 0x0A */ HI_U16 u16MeteringCrRefMinAwb;
     /* 0x0E */ HI_U16 u16MeteringCbRefMinAwb;
 } ISP_AWB_STAT_ATTR_S; /* 0x10 */
 
