@@ -9,36 +9,7 @@
 #include "isp_awb.h"
 
 #include <stdio.h>
-
-#if AWB_VERBOSE_DEBUG
-static void dump_awb_stat2(const ISP_AWB_STAT_2_S *s)
-{
-    HI_U32 z;
-    HI_U32 nonzero = 0;
-    HI_U32 above64 = 0;
-    unsigned long long sum = 0;
-    unsigned long long usableSum = 0;
-
-    for (z = 0; z < 255; ++z) {
-        HI_U32 n = s->au16WhitePointCount[z];
-
-        sum += n;
-
-        if (n != 0)
-            ++nonzero;
-
-        if (n > 0x40) {
-            ++above64;
-            usableSum += n;
-        }
-    }
-
-    fprintf(stderr,
-        "AWB Stat2: sum=%llu, usableSum=%llu, "
-        "nonzeroZones=%u, zonesAbove64=%u\n",
-        sum, usableSum, nonzero, above64);
-}
-#endif
+#include <stdlib.h>
 
 /*
  * Integer square root used by the original AWB implementation.
@@ -91,7 +62,7 @@ static HI_U32 AwbSqrt32(HI_U32 u32Value)
  * reciprocals of the G/R and G/B correction ratios supplied by this ISP.
  * The returned Planck offset is a signed distance from the calibrated locus.
  */
-static HI_S32 AwbToMired(
+HI_S32 AwbToMired(
     const AWB_SENSOR_DEFAULT_S *pstSensorDefault,
     HI_U32 u32Rg,
     HI_U32 u32Bg,
@@ -202,11 +173,11 @@ static HI_U32 AwbFilterGain(HI_U32 u32Previous, HI_U32 u32Target)
     /* IIR alpha = 1/16, implemented without signed arithmetic. */
     if (u32Target >= u32Previous) {
         u32Delta = u32Target - u32Previous;
-        return u32Previous + ((u32Delta + 8u) >> 4);
+        return u32Previous + ((u32Delta + 8) >> 4);
     }
 
     u32Delta = u32Previous - u32Target;
-    return u32Previous - ((u32Delta + 8u) >> 4);
+    return u32Previous - ((u32Delta + 8) >> 4);
 }
 
 static HI_VOID simple_ccm(
@@ -410,14 +381,14 @@ HI_S32 AwbRun(
     if (pstCtx->bInitialized == HI_FALSE)
         return HI_FAILURE;
 
-    AWB_DEBUG_PRINT(
+    if (0) fprintf(stderr,
         "  global AWB statistics: G/R=0x%03x, G/B=0x%03x, "
         "whitePoints=%u\n",
         pstAwbInfo->pstAwbStat1->u16RgRatio,
         pstAwbInfo->pstAwbStat1->u16BgRatio,
         pstAwbInfo->pstAwbStat1->u32WhitePointCount);
 
-#if AWB_VERBOSE_DEBUG
+#if 0
     dump_awb_stat2(pstAwbInfo->pstAwbStat2);
 #endif
 
@@ -435,14 +406,21 @@ HI_S32 AwbRun(
     if (pstAwbInfo->pstAwbStat1->u32WhitePointCount >= 1024u &&
         pstAwbInfo->pstAwbStat1->u16RgRatio != 0 &&
         pstAwbInfo->pstAwbStat1->u16BgRatio != 0) {
+
+        HI_U16 RgRatio = pstAwbInfo->pstAwbStat1->u16RgRatio;
+        HI_U16 BgRatio = pstAwbInfo->pstAwbStat1->u16BgRatio;
+
+        //best_white_RgBg_zones(pstAwbInfo->pstAwbStat2, &pstCtx->stSensorDefault);
+
+
+        //correct_RgBg_by_best_zones(pstAwbInfo->pstAwbStat2, &RgRatio, &BgRatio);
+
         /*
          * Original AwbWbMatrixCalculate() calls AwbToMired() with the
          * reciprocal of its selected G/R and G/B correction gains.
          */
-        u32RgCoordinate =
-            0xFFFFu / pstAwbInfo->pstAwbStat1->u16RgRatio;
-        u32BgCoordinate =
-            0xFFFFu / pstAwbInfo->pstAwbStat1->u16BgRatio;
+        u32RgCoordinate = 0xFFFF / RgRatio;
+        u32BgCoordinate = 0xFFFF / BgRatio;
 
         (void)AwbToMired(
             &pstCtx->stSensorDefault,
@@ -454,9 +432,7 @@ HI_S32 AwbRun(
         u32Mired = (u32MiredQ8 + 128u) >> 8;
         u32ColorTemp = (u32Mired != 0u) ? (1000000u / u32Mired) : 0u;
 
-        simple_ccm(&pstCtx->stSensorDefault.stCcm, u32ColorTemp, pstAwbResult->au16ColorMatrix);
-
-        AWB_DEBUG_PRINT(
+        if (0) fprintf(stderr,
             "  estimated CCT: R/G=0x%03x, B/G=0x%03x, "
             "miredQ8=%u, mired=%u, temp=%u K, PlanckOffset=%d\n",
             u32RgCoordinate,
@@ -466,24 +442,35 @@ HI_S32 AwbRun(
             u32ColorTemp,
             (int)s16PlanckOffset);
 
-        au32TargetGain[0] =
-            (HI_U32)pstCtx->stSensorDefault.au16GainOffset[0] *
-            pstAwbInfo->pstAwbStat1->u16RgRatio;
-        au32TargetGain[1] =
-            (HI_U32)pstCtx->stSensorDefault.au16GainOffset[1] * 0x100u;
-        au32TargetGain[2] =
-            (HI_U32)pstCtx->stSensorDefault.au16GainOffset[2] * 0x100u;
-        au32TargetGain[3] =
-            (HI_U32)pstCtx->stSensorDefault.au16GainOffset[3] *
-            pstAwbInfo->pstAwbStat1->u16BgRatio;
+        simple_ccm(&pstCtx->stSensorDefault.stCcm, u32ColorTemp, pstAwbResult->au16ColorMatrix);
+
+        HI_U32 u32RCorrection = RgRatio;
+        HI_U32 u32BCorrection = BgRatio;
+
+        au32TargetGain[0] = pstCtx->au32SaveTargetGain[0] * u32RCorrection;
+        au32TargetGain[1] = pstCtx->au32SaveTargetGain[1] * 0x100u;
+        au32TargetGain[2] = pstCtx->au32SaveTargetGain[2] * 0x100u;
+        au32TargetGain[3] = pstCtx->au32SaveTargetGain[3] * u32BCorrection;
+
+        if ((au32TargetGain[0] > 0x40000) || (au32TargetGain[3] > 0x40000))
+        {
+            au32TargetGain[0] = pstCtx->stSensorDefault.au16GainOffset[0] * u32RCorrection;
+            au32TargetGain[1] = pstCtx->stSensorDefault.au16GainOffset[1] * 0x100;
+            au32TargetGain[2] = pstCtx->stSensorDefault.au16GainOffset[2] * 0x100;
+            au32TargetGain[3] = pstCtx->stSensorDefault.au16GainOffset[3] * u32BCorrection;
+        }
+
+
+        pstCtx->au32SaveTargetGain[0] = (pstCtx->au32SaveTargetGain[0] + ((128 + au32TargetGain[0]) >> 8)) >> 1;
+        pstCtx->au32SaveTargetGain[1] = (pstCtx->au32SaveTargetGain[1] + ((128 + au32TargetGain[1]) >> 8)) >> 1;
+        pstCtx->au32SaveTargetGain[2] = (pstCtx->au32SaveTargetGain[2] + ((128 + au32TargetGain[2]) >> 8)) >> 1;
+        pstCtx->au32SaveTargetGain[3] = (pstCtx->au32SaveTargetGain[3] + ((128 + au32TargetGain[3]) >> 8)) >> 1;
 
         for (i = 0; i < 4; ++i) {
             pstCtx->stResult.au32WhiteBalanceGain[i] =
-                AwbFilterGain(
-                    pstCtx->stResult.au32WhiteBalanceGain[i],
-                    au32TargetGain[i]);
-            pstAwbResult->au32WhiteBalanceGain[i] =
-                pstCtx->stResult.au32WhiteBalanceGain[i];
+                AwbFilterGain(pstCtx->stResult.au32WhiteBalanceGain[i], au32TargetGain[i]);
+
+            pstAwbResult->au32WhiteBalanceGain[i] = pstCtx->stResult.au32WhiteBalanceGain[i];
         }
 
         AWB_DEBUG_PRINT(
@@ -495,7 +482,7 @@ HI_S32 AwbRun(
             au32TargetGain[3]);
     }
 
-    AWB_DEBUG_PRINT(
+    if (0) fprintf(stderr,
         "  output WB gains Q16: R=0x%08x, Gr=0x%08x, "
         "Gb=0x%08x, B=0x%08x\n",
         pstAwbResult->au32WhiteBalanceGain[0],

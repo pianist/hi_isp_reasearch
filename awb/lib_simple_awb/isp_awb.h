@@ -44,6 +44,7 @@ typedef signed short       HI_S16;
 typedef unsigned short     HI_U16;
 typedef signed int         HI_S32;
 typedef unsigned int       HI_U32;
+typedef unsigned long long HI_U64;
 typedef char               HI_CHAR;
 typedef void               HI_VOID;
 
@@ -292,12 +293,18 @@ typedef struct hiAWB_STUB_CTX_S
     AWB_SENSOR_REGISTER_S stSensorRegister;
     AWB_SENSOR_DEFAULT_S  stSensorDefault;
     ISP_AWB_RESULT_S      stResult;
+
+    HI_U32 au32SaveTargetGain[4];
 } AWB_STUB_CTX_S;
 
 extern AWB_STUB_CTX_S g_astAwbStubCtx[AWB_MAX_HANDLES];
 
 /* Rebuild the constant output after sensor defaults have changed. */
 HI_VOID AwbPrepareDefaultResult(AWB_STUB_CTX_S *pstCtx);
+
+HI_S32 AwbToMired(const AWB_SENSOR_DEFAULT_S *pstSensorDefault, HI_U32 u32Rg, HI_U32 u32Bg, HI_U32 *pu32MiredQ8, HI_S16 *ps16PlanckOffset);
+
+void best_white_RgBg_zones(const ISP_AWB_STAT_2_S *zs, const AWB_SENSOR_DEFAULT_S *snsDft);
 
 /* ------------------------------------------------------------------------- */
 /* Replacement algorithm callbacks                                          */

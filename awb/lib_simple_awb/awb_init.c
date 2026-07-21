@@ -37,6 +37,7 @@ HI_VOID AwbPrepareDefaultResult(AWB_STUB_CTX_S *pstCtx)
         if (u16Gain == 0)
             u16Gain = 0x0100;
 
+        pstCtx->au32SaveTargetGain[i] = u16Gain;
         pstResult->au32WhiteBalanceGain[i] = (HI_U32)u16Gain << 8;
     }
 
