@@ -58,7 +58,7 @@ HI_S32 HI_MPI_AWB_Register(ALG_LIB_S *pstAwbLib)
     memset(&stRegister, 0, sizeof(stRegister));
 
     stRegister.stAwbExpFunc.pfn_awb_init = AwbInit;
-    stRegister.stAwbExpFunc.pfn_awb_run  = AwbRun;
+    stRegister.stAwbExpFunc.pfn_awb_run  = AwbRun_calibrate_gains_default;
     stRegister.stAwbExpFunc.pfn_awb_ctrl = AwbCtrl;
     stRegister.stAwbExpFunc.pfn_awb_exit = AwbExit;
 

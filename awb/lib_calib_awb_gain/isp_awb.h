@@ -315,6 +315,8 @@ HI_S32 AwbRun(
     ISP_AWB_RESULT_S *pstAwbResult,
     HI_S32 s32Reserved);
 
+HI_S32 AwbRun_calibrate_gains_default(HI_S32 s32Handle, const ISP_AWB_INFO_S *pstAwbInfo, ISP_AWB_RESULT_S *pstAwbResult, HI_S32 s32Reserved);
+
 HI_S32 AwbCtrl(
     HI_S32 s32Handle,
     HI_U32 u32Cmd,
