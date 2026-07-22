@@ -340,6 +340,8 @@ static HI_VOID simple_ccm(
     }
 }
 
+unsigned debilocounter = 0;
+
 HI_S32 AwbRun(
     HI_S32 s32Handle,
     const ISP_AWB_INFO_S *pstAwbInfo,
@@ -381,8 +383,11 @@ HI_S32 AwbRun(
     if (pstCtx->bInitialized == HI_FALSE)
         return HI_FAILURE;
 
-    if (0) fprintf(stderr,
-        "  global AWB statistics: G/R=0x%03x, G/B=0x%03x, "
+    debilocounter++;
+    if (debilocounter > 100) debilocounter = 0;
+
+    if (!debilocounter) fprintf(stderr,
+        "\n\n\n  global AWB statistics: G/R=0x%03x, G/B=0x%03x, "
         "whitePoints=%u\n",
         pstAwbInfo->pstAwbStat1->u16RgRatio,
         pstAwbInfo->pstAwbStat1->u16BgRatio,
@@ -410,8 +415,34 @@ HI_S32 AwbRun(
         HI_U16 RgRatio = pstAwbInfo->pstAwbStat1->u16RgRatio;
         HI_U16 BgRatio = pstAwbInfo->pstAwbStat1->u16BgRatio;
 
-        //best_white_RgBg_zones(pstAwbInfo->pstAwbStat2, &pstCtx->stSensorDefault);
+        HI_U32 u32AppliedR = (pstCtx->stResult.au32WhiteBalanceGain[0] + 0x80) >> 8;
+        HI_U32 u32AppliedG = (pstCtx->stResult.au32WhiteBalanceGain[1] + 0x80) >> 8;
+        HI_U32 u32AppliedB = (pstCtx->stResult.au32WhiteBalanceGain[3] + 0x80) >> 8;
 
+        HI_U32 u32OffsetR = pstCtx->stSensorDefault.au16GainOffset[0];
+        HI_U32 u32OffsetG = pstCtx->stSensorDefault.au16GainOffset[1];
+        HI_U32 u32OffsetB = pstCtx->stSensorDefault.au16GainOffset[3];
+
+        /* Защита делений. */
+        if (u32AppliedR == 0) u32AppliedR = 1;
+        if (u32AppliedG == 0) u32AppliedG = 1;
+        if (u32AppliedB == 0) u32AppliedB = 1;
+        if (u32OffsetR == 0) u32OffsetR = 1;
+        if (u32OffsetG == 0) u32OffsetG = 1;
+        if (u32OffsetB == 0) u32OffsetB = 1;
+
+        HI_U64 u64Numerator = (unsigned long long)RgRatio * u32AppliedR * u32OffsetG;
+        HI_U64 u64Denominator = (unsigned long long)u32AppliedG * u32OffsetR; 
+        HI_U32 u32CorrectedGr = (HI_U32)(u64Numerator / u64Denominator);
+
+        u64Numerator = (unsigned long long)BgRatio * u32AppliedB *u32OffsetG;
+        u64Denominator = (unsigned long long)u32AppliedG * u32OffsetB;
+        HI_U32 u32CorrectedGb = (HI_U32)(u64Numerator / u64Denominator);
+
+        if (u32CorrectedGr == 0) u32CorrectedGr = 1;
+        if (u32CorrectedGb == 0) u32CorrectedGb = 1;
+
+        //best_white_RgBg_zones(pstAwbInfo->pstAwbStat2, &pstCtx->stSensorDefault);
 
         //correct_RgBg_by_best_zones(pstAwbInfo->pstAwbStat2, &RgRatio, &BgRatio);
 
@@ -419,8 +450,10 @@ HI_S32 AwbRun(
          * Original AwbWbMatrixCalculate() calls AwbToMired() with the
          * reciprocal of its selected G/R and G/B correction gains.
          */
-        u32RgCoordinate = 0xFFFF / RgRatio;
-        u32BgCoordinate = 0xFFFF / BgRatio;
+        u32RgCoordinate = 0xFFFF / u32CorrectedGr;
+        u32BgCoordinate = 0xFFFF / u32CorrectedGb;
+
+        if (!debilocounter) fprintf(stderr, "CCT input: stat G/R=0x%03x G/B=0x%03x, " "applied R/G/B=0x%03x/0x%03x/0x%03x, " "corrected G/R=0x%03x G/B=0x%03x, " "curve R/G=0x%03x B/G=0x%03x\n", RgRatio, BgRatio, u32AppliedR, u32AppliedG, u32AppliedB, u32CorrectedGr, u32CorrectedGb, u32RgCoordinate, u32BgCoordinate);
 
         (void)AwbToMired(
             &pstCtx->stSensorDefault,
@@ -432,7 +465,7 @@ HI_S32 AwbRun(
         u32Mired = (u32MiredQ8 + 128u) >> 8;
         u32ColorTemp = (u32Mired != 0u) ? (1000000u / u32Mired) : 0u;
 
-        if (0) fprintf(stderr,
+        if (!debilocounter) fprintf(stderr,
             "  estimated CCT: R/G=0x%03x, B/G=0x%03x, "
             "miredQ8=%u, mired=%u, temp=%u K, PlanckOffset=%d\n",
             u32RgCoordinate,
@@ -442,7 +475,7 @@ HI_S32 AwbRun(
             u32ColorTemp,
             (int)s16PlanckOffset);
 
-        simple_ccm(&pstCtx->stSensorDefault.stCcm, u32ColorTemp, pstAwbResult->au16ColorMatrix);
+        //simple_ccm(&pstCtx->stSensorDefault.stCcm, u32ColorTemp, pstAwbResult->au16ColorMatrix);
 
         HI_U32 u32RCorrection = RgRatio;
         HI_U32 u32BCorrection = BgRatio;

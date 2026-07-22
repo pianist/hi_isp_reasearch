@@ -16,23 +16,36 @@ static HI_U8 planck_neutrality_score(HI_U32 u32AbsOffset)
      * Это начальные диагностические пороги, а не калибровочные константы.
      */
     if (u32AbsOffset <= 8)
-        return 5;
+        return 9;
 
     if (u32AbsOffset <= 16)
-        return 4;
+        return 8;
 
     if (u32AbsOffset <= 24)
-        return 3;
+        return 7;
 
     if (u32AbsOffset <= 32)
-        return 2;
+        return 6;
+
+    if (u32AbsOffset <= 40)
+        return 5;
 
     if (u32AbsOffset <= 48)
+        return 4;
+
+    if (u32AbsOffset <= 56)
+        return 3;
+
+    if (u32AbsOffset <= 64)
+        return 2;
+
+    if (u32AbsOffset <= 96)
         return 1;
 
     return 0;
 }
 
+extern unsigned debilocounter;
 
 void best_white_RgBg_zones(
     const ISP_AWB_STAT_2_S *zs,
@@ -63,7 +76,7 @@ void best_white_RgBg_zones(
     HI_U32 u32BestPopulation;
 
     if (zs == HI_NULL || snsDft == HI_NULL) {
-        fprintf(stderr, "Planck neutrality map: null argument\n");
+        if (!debilocounter) fprintf(stderr, "Planck neutrality map: null argument\n");
         return;
     }
 
@@ -140,34 +153,35 @@ void best_white_RgBg_zones(
         }
     }
 
-    fprintf(
+    if (!debilocounter) fprintf(
         stderr,
         "Planck neutrality map: "
         "5=very close, 0=far, .=population<=%u\n",
         (unsigned int)AWB_ZONE_MIN_POPULATION);
 
-    fprintf(stderr, "       ");
+    if (!debilocounter) fprintf(stderr, "       ");
     for (x = 0; x < AWB_ZONE_COLUMNS; ++x)
-        fprintf(stderr, "%2u ", (unsigned int)x);
-    fprintf(stderr, "\n");
+        if (!debilocounter) fprintf(stderr, "%2u ", (unsigned int)x);
+    if (!debilocounter) fprintf(stderr, "\n");
 
     for (y = 0; y < AWB_ZONE_ROWS; ++y) {
-        fprintf(stderr, "y=%02u: ", (unsigned int)y);
+        if (!debilocounter) fprintf(stderr, "y=%02u: ", (unsigned int)y);
 
         for (x = 0; x < AWB_ZONE_COLUMNS; ++x) {
             i = y * AWB_ZONE_COLUMNS + x;
 
-            if (au8Valid[i])
-                fprintf(stderr, "%2u ", (unsigned int)au8Score[i]);
-            else
-                fprintf(stderr, " . ");
+            if (au8Valid[i]) {
+                if (!debilocounter) fprintf(stderr, "%2u ", (unsigned int)au8Score[i]);
+            } else {
+                if (!debilocounter) fprintf(stderr, " . ");
+            }
         }
 
-        fprintf(stderr, "\n");
+        if (!debilocounter) fprintf(stderr, "\n");
     }
 
     if (u32BestIndex >= AWB_ZONE_COUNT) {
-        fprintf(stderr, "No statistically valid AWB zones\n");
+        if (!debilocounter) fprintf(stderr, "No statistically valid AWB zones\n");
         return;
     }
 
@@ -188,7 +202,7 @@ void best_white_RgBg_zones(
             ? (256000000 + u32MiredQ8 / 2) / u32MiredQ8
             : 0;
 
-    fprintf(
+    if (!debilocounter) fprintf(
         stderr,
         "Best Planck zone: (%u,%u), score=%u, "
         "offset=%d, CCT=%uK, population=%u, "
