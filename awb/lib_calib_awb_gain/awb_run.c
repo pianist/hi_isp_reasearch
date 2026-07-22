@@ -121,7 +121,14 @@ HI_S32 AwbRun_calibrate_gains_default(HI_S32 s32Handle, const ISP_AWB_INFO_S *ps
 
             avg_Rg /= GAIN_STAT_COLLECTION_SIZE;
             avg_Bg /= GAIN_STAT_COLLECTION_SIZE;
-            fprintf(stderr, "CALIBRATION default GAIN: R=0x%x, Gr=0x100, Gb=0x100, B=0x%x\n", avg_Rg, avg_Bg);
+            unsigned err_diff = 0;
+
+            for (unsigned i = 0; i < GAIN_STAT_COLLECTION_SIZE; ++i)
+            {
+                err_diff += avg_Rg > gain_stat_Rg[i] ? avg_Rg - gain_stat_Rg[i] : gain_stat_Rg[i] - avg_Rg;
+                err_diff += avg_Bg > gain_stat_Bg[i] ? avg_Bg - gain_stat_Bg[i] : gain_stat_Bg[i] - avg_Bg;
+            }
+            fprintf(stderr, "CALIBRATION default GAIN: R=0x%x, Gr=0x100, Gb=0x100, B=0x%x, stability err = %d\n", avg_Rg, avg_Bg, err_diff / GAIN_STAT_COLLECTION_SIZE);
         }
 
         gain_stat_Rg[gain_stat_counter] = pstCtx->au32SaveTargetGain[0];
